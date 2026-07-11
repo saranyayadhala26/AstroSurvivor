@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-
+import { StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import Asteroid from "../../components/Asteroid";
 import Controls from "../../components/Controls";
+import Difficulty from "../../components/Difficulty";
+import { BOTTOM_LIMIT, getAsteroidSpeed, getRandomAsteroidX, isCollision, MAX_X, MIN_X, RESET_Y, } from "../../components/GameEngine";
 import GameOver from "../../components/GameOver";
+import Lives from "../../components/Lives";
 import ScoreBoard from "../../components/ScoreBoard";
 import Spaceship from "../../components/Spaceship";
+import StarBackground from "../../components/StarBackground";
+
 
 export default function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -22,16 +21,20 @@ export default function HomeScreen() {
   const [asteroidY, setAsteroidY] = useState(0);
 
   const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+
+  // Asteroid speed increases with score
+  const asteroidSpeed = getAsteroidSpeed(score);
 
   const moveLeft = () => {
     if (!gameOver) {
-      setShipX((prev) => Math.max(prev - 20, -120));
+      setShipX((prev) => Math.max(prev - 20, MIN_X));
     }
   };
 
   const moveRight = () => {
     if (!gameOver) {
-      setShipX((prev) => Math.min(prev + 20, 120));
+     setShipX((prev) => Math.min(prev + 20, MAX_X));
     }
   };
 
@@ -41,49 +44,69 @@ export default function HomeScreen() {
 
     const interval = setInterval(() => {
       setAsteroidY((prev) => {
-        if (prev > 650) {
-          setScore((s) => s + 1);
+        if (prev > BOTTOM_LIMIT) {
+  setScore((s) => s + 1);
 
-          setAsteroidX(Math.floor(Math.random() * 241) - 120);
+  setAsteroidX(getRandomAsteroidX());
 
-          return 0;
-        }
+  return RESET_Y;
+}
 
-        return prev + 8;
+        return prev + asteroidSpeed;
       });
     }, 40);
 
     return () => clearInterval(interval);
-  }, [gameStarted, gameOver]);
+  }, [gameStarted, gameOver, asteroidSpeed]);
 
   // Collision Detection
-  useEffect(() => {
-    if (!gameStarted || gameOver) return;
+// Collision Detection
+useEffect(() => {
+  if (!gameStarted || gameOver) return;
 
-    const verticalHit =
-      asteroidY >= 520 && asteroidY <= 620;
+  if (isCollision(asteroidX, asteroidY, shipX)) {
 
-    const horizontalHit =
-      Math.abs(shipX - asteroidX) < 25;
+    if (lives > 1) {
+      setLives((prev) => prev - 1);
 
-    if (verticalHit && horizontalHit) {
+      // Respawn asteroid
+      setAsteroidY(RESET_Y);
+      setAsteroidX(getRandomAsteroidX());
+
+    } else {
+      setLives(0);
       setGameOver(true);
     }
-  }, [asteroidY, asteroidX, shipX, gameStarted, gameOver]);
 
-  const restartGame = () => {
-    setGameOver(false);
+  }
 
-    setShipX(0);
+}, [
+  asteroidY,
+  asteroidX,
+  shipX,
+  lives,
+  gameStarted,
+  gameOver,
+]);
 
-    setAsteroidX(0);
-    setAsteroidY(0);
+const restartGame = () => {
+  setGameOver(false);
 
-    setScore(0);
-  };
+  setShipX(0);
+
+  setAsteroidY(RESET_Y);
+
+  setAsteroidX(getRandomAsteroidX());
+
+  setScore(0);
+
+  setLives(3);
+};
 
   return (
+    
     <View style={styles.container}>
+      <StarBackground />
       {!gameStarted ? (
         <>
           <Text style={styles.title}>
@@ -96,7 +119,10 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => setGameStarted(true)}
+            onPress={() => {
+              setGameStarted(true);
+              setAsteroidX(getRandomAsteroidX());
+            }}
           >
             <Text style={styles.buttonText}>
               Start Game
@@ -105,7 +131,11 @@ export default function HomeScreen() {
         </>
       ) : (
         <View style={styles.gameContainer}>
-          <ScoreBoard score={score} />
+          <View style={{ alignItems: "center" }}>
+  <ScoreBoard score={score} />
+  <Lives lives={lives} />
+   <Difficulty score={score} />
+</View>
 
           <Asteroid
             asteroidX={asteroidX}
