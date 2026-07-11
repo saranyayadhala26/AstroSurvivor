@@ -1,9 +1,25 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+import Asteroid from "../../components/Asteroid";
+import Controls from "../../components/Controls";
+import ScoreBoard from "../../components/ScoreBoard";
+import Spaceship from "../../components/Spaceship";
 
 export default function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
+
   const [shipX, setShipX] = useState(0);
+
+  const [asteroidX] = useState(0);
+  const [asteroidY, setAsteroidY] = useState(0);
+
+  const [score] = useState(0);
 
   const moveLeft = () => {
     setShipX((prev) => Math.max(prev - 20, -120));
@@ -13,51 +29,58 @@ export default function HomeScreen() {
     setShipX((prev) => Math.min(prev + 20, 120));
   };
 
+  useEffect(() => {
+    if (!gameStarted) return;
+
+    const interval = setInterval(() => {
+      setAsteroidY((prev) => {
+        if (prev > 550) {
+          return 0;
+        }
+
+        return prev + 8;
+      });
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, [gameStarted]);
+
   return (
     <View style={styles.container}>
       {!gameStarted ? (
         <>
-          <Text style={styles.title}>🚀 Space Escape Runner</Text>
+          <Text style={styles.title}>
+            🚀 Space Escape Runner
+          </Text>
 
-          <Text style={styles.score}>Current Score: 0</Text>
+          <Text style={styles.scoreText}>
+            Current Score: 0
+          </Text>
 
           <TouchableOpacity
             style={styles.button}
             onPress={() => setGameStarted(true)}
           >
-            <Text style={styles.buttonText}>Start Game</Text>
+            <Text style={styles.buttonText}>
+              Start Game
+            </Text>
           </TouchableOpacity>
         </>
       ) : (
         <View style={styles.gameContainer}>
-          <Text style={styles.gameScore}>Score : 0</Text>
+          <ScoreBoard score={score} />
 
-          <View
-            style={[
-              styles.spaceship,
-              {
-                transform: [{ translateX: shipX }],
-              },
-            ]}
-          >
-            <Text style={styles.shipEmoji}>🚀</Text>
-          </View>
+          <Asteroid
+            asteroidX={asteroidX}
+            asteroidY={asteroidY}
+          />
 
-          <View style={styles.controls}>
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={moveLeft}
-            >
-              <Text style={styles.controlText}>⬅️</Text>
-            </TouchableOpacity>
+          <Spaceship shipX={shipX} />
 
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={moveRight}
-            >
-              <Text style={styles.controlText}>➡️</Text>
-            </TouchableOpacity>
-          </View>
+          <Controls
+            moveLeft={moveLeft}
+            moveRight={moveRight}
+          />
         </View>
       )}
     </View>
@@ -81,7 +104,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  score: {
+  scoreText: {
     fontSize: 22,
     color: "#FFD54F",
     marginBottom: 40,
@@ -108,37 +131,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 70,
     paddingBottom: 40,
-  },
-
-  gameScore: {
-    fontSize: 28,
-    color: "#FFD54F",
-    fontWeight: "bold",
-  },
-
-  spaceship: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  shipEmoji: {
-    fontSize: 70,
-  },
-
-  controls: {
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: "space-evenly",
-  },
-
-  controlButton: {
-    backgroundColor: "#2979FF",
-    paddingHorizontal: 25,
-    paddingVertical: 18,
-    borderRadius: 15,
-  },
-
-  controlText: {
-    fontSize: 28,
   },
 });
