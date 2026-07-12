@@ -1,22 +1,29 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View, } from "react-native";
+import About from "../../components/About";
 import Asteroid from "../../components/Asteroid";
 import Controls from "../../components/Controls";
 import Explosion from "../../components/Explosion";
 import { BOTTOM_LIMIT, getAsteroidSpeed, getRandomAsteroidX, isCollision, MAX_X, MIN_X, RESET_Y, } from "../../components/GameEngine";
 import GameOver from "../../components/GameOver";
 import Heart from "../../components/Heart";
+import HowToPlay from "../../components/HowToPlay";
 import HUD from "../../components/HUD";
+import IntroScreen from "../../components/IntroScreen";
 import PauseMenu from "../../components/PauseMenu";
 import Shield from "../../components/Shield";
 import Spaceship from "../../components/Spaceship";
 import StarBackground from "../../components/StarBackground";
-
+import StartMenu from "../../components/StartMenu";
 export default function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-const [gamePaused, setGamePaused] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [currentPage, setCurrentPage] = useState<
+  "menu" | "howToPlay" | "about"
+>("menu");
+  const [gamePaused, setGamePaused] = useState(false);
   const [shipX, setShipX] = useState(0);
 
   const [asteroidX, setAsteroidX] = useState(0);
@@ -411,33 +418,53 @@ const restartGame = () => {
   // Reset lives
   setLives(3);
 };
-  return (
-    
+return (
+
+  showIntro ? (
+
+    <IntroScreen
+    onFinish={() => {
+        setShowIntro(false);
+    }}
+/>
+
+  ) : (
+
     <View style={styles.container}>
       <StarBackground />
       {!gameStarted ? (
-        <>
-          <Text style={styles.title}>
-            🚀 Space Escape Runner
-          </Text>
 
-          <Text style={styles.scoreText}>
-            Current Score : 0
-          </Text>
+  currentPage === "menu" ? (
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              setGameStarted(true);
-              setAsteroidX(getRandomAsteroidX());
-            }}
-          >
-            <Text style={styles.buttonText}>
-              Start Game
-            </Text>
-          </TouchableOpacity>
-        </>
-      ) : (
+    <StartMenu
+      highScore={highScore}
+      onStart={() => {
+        setGameStarted(true);
+        setAsteroidX(getRandomAsteroidX());
+      }}
+      onHowToPlay={() => {
+        setCurrentPage("howToPlay");
+      }}
+      onAbout={() => {
+        setCurrentPage("about");
+      }}
+    />
+
+  ) : currentPage === "howToPlay" ? (
+
+    <HowToPlay
+      onBack={() => setCurrentPage("menu")}
+    />
+
+  ) : (
+
+    <About
+      onBack={() => setCurrentPage("menu")}
+    />
+
+  )
+
+) : (
         <View style={styles.gameContainer}>
           {!gameOver && !gamePaused && (
             <TouchableOpacity
@@ -592,6 +619,7 @@ const restartGame = () => {
         </View>
       )}
     </View>
+    )
   );
 }
 
