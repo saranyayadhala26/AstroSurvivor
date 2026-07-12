@@ -1,14 +1,14 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import Asteroid from "../../components/Asteroid";
 import Controls from "../../components/Controls";
-import Difficulty from "../../components/Difficulty";
 import Explosion from "../../components/Explosion";
 import { BOTTOM_LIMIT, getAsteroidSpeed, getRandomAsteroidX, isCollision, MAX_X, MIN_X, RESET_Y, } from "../../components/GameEngine";
 import GameOver from "../../components/GameOver";
 import Heart from "../../components/Heart";
-import Lives from "../../components/Lives";
-import ScoreBoard from "../../components/ScoreBoard";
+import HUD from "../../components/HUD";
+import PauseMenu from "../../components/PauseMenu";
 import Shield from "../../components/Shield";
 import Spaceship from "../../components/Spaceship";
 import StarBackground from "../../components/StarBackground";
@@ -16,7 +16,7 @@ import StarBackground from "../../components/StarBackground";
 export default function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-
+const [gamePaused, setGamePaused] = useState(false);
   const [shipX, setShipX] = useState(0);
 
   const [asteroidX, setAsteroidX] = useState(0);
@@ -40,6 +40,9 @@ const [shieldActive, setShieldActive] = useState(false);
   const [explosionX, setExplosionX] = useState(0);
 
 const [explosionY, setExplosionY] = useState(0);
+const [countdown, setCountdown] = useState(0);
+const [showCountdown, setShowCountdown] = useState(false);
+const [newHighScore, setNewHighScore] = useState(false);
   // Asteroid speed increases with score
   const asteroidSpeed = getAsteroidSpeed(score);
 
@@ -55,10 +58,27 @@ const [explosionY, setExplosionY] = useState(0);
     }
   };
 
+  useEffect(() => {
+  loadHighScore();
+}, []);
+
+const loadHighScore = async () => {
+  try {
+    const value = await AsyncStorage.getItem("HIGH_SCORE");
+
+    if (value !== null) {
+      setHighScore(Number(value));
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
+};
+
   // Falling asteroid
   useEffect(() => 
     {
-    if (!gameStarted || gameOver) return;
+    if (!gameStarted || gameOver || gamePaused) return;
 
     const interval = setInterval(() => {
       setAsteroidY((prev) => {
@@ -66,9 +86,18 @@ const [explosionY, setExplosionY] = useState(0);
   setScore((prevScore) => {
   const newScore = prevScore + 1;
 
-  setHighScore((prevHigh) =>
-    newScore > prevHigh ? newScore : prevHigh
+if (newScore > highScore) {
+
+  setHighScore(newScore);
+
+  setNewHighScore(true);
+
+  AsyncStorage.setItem(
+    "HIGH_SCORE",
+    newScore.toString()
   );
+
+}
 
   return newScore;
 });
@@ -83,10 +112,10 @@ const [explosionY, setExplosionY] = useState(0);
     }, 40);
 
     return () => clearInterval(interval);
-  }, [gameStarted, gameOver, asteroidSpeed]);
+  }, [gameStarted, gameOver, asteroidSpeed, gamePaused]);
 
   useEffect(() => {
-  if (!gameStarted || gameOver) return;
+  if (!gameStarted || gameOver || gamePaused) return;
 
   const interval = setInterval(() => {
     setAsteroid2Y((prev) => {
@@ -112,11 +141,11 @@ setScore((prevScore) => {
 
   return () => clearInterval(interval);
 
-}, [gameStarted, gameOver, asteroidSpeed]);
+}, [gameStarted, gameOver, asteroidSpeed, gamePaused]);
 
 // Heart Spawn
 useEffect(() => {
-  if (!gameStarted || gameOver) return;
+  if (!gameStarted || gameOver || gamePaused) return;
 
   const timer = setInterval(() => {
     console.log("Heart Spawned ❤️");
@@ -131,7 +160,7 @@ useEffect(() => {
 
 }, [gameStarted, gameOver]);
 useEffect(() => {
-  if (!heartVisible) return;
+  if (!heartVisible || gamePaused) return;
 
   const interval = setInterval(() => {
 
@@ -191,7 +220,7 @@ useEffect(() => {
 // ===========================
 
 useEffect(() => {
-  if (!gameStarted || gameOver) return;
+  if (!gameStarted || gameOver || gamePaused) return;
 
   const timer = setInterval(() => {
     setShieldVisible(true);
@@ -207,7 +236,7 @@ useEffect(() => {
 // ===========================
 
 useEffect(() => {
-  if (!shieldVisible) return;
+  if (!shieldVisible || gamePaused) return;
 
   const interval = setInterval(() => {
     setShieldY((prev) => {
@@ -276,11 +305,32 @@ useEffect(() => {
 
 }, [shieldActive]);
 
+useEffect(() => {
+  if (!showCountdown) return;
+
+  if (countdown === 0) {
+    setShowCountdown(false);
+    setGamePaused(false);
+    return;
+  }
+
+  const timer = setTimeout(() => {
+    setCountdown((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearTimeout(timer);
+
+}, [countdown, showCountdown]);
+
+
+
+
+
 // Collision Detection
 
 
 useEffect(() => {
-  if (!gameStarted || gameOver) return;
+  if (!gameStarted || gameOver || gamePaused) return;
   if (shieldActive) return;
 
   const hitAsteroid1 = isCollision(
@@ -344,7 +394,7 @@ setTimeout(() => {
 
 const restartGame = () => {
   setGameOver(false);
-
+  setNewHighScore(false);
   setShipX(0);
 
   // First asteroid
@@ -389,6 +439,28 @@ const restartGame = () => {
         </>
       ) : (
         <View style={styles.gameContainer}>
+          {!gameOver && !gamePaused && (
+            <TouchableOpacity
+              onPress={() => setGamePaused(true)}
+              style={{
+                position: "absolute",
+                top: 10,
+    right: 20,
+    backgroundColor: "#2979FF",
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 999,
+  }}
+>
+  <Text style={{
+     color: "white",
+     fontSize: 20,
+     }}
+     >
+    ⏸
+  </Text>
+</TouchableOpacity>
+)}
           <View style={{ alignItems: "center" }}>
 
   <Text
@@ -402,11 +474,21 @@ const restartGame = () => {
     🏆 High Score : {highScore}
   </Text>
 
-  <ScoreBoard score={score} />
-
-<Lives lives={lives} />
-
-<Difficulty score={score} />
+  <HUD
+  score={score}
+  highScore={highScore}
+  lives={lives}
+  level={
+    score < 5
+      ? "🟢 Easy"
+      : score < 10
+      ? "🟡 Medium"
+      : score < 20
+      ? "🟠 Hard"
+      : "🔴 Extreme"
+  }
+  shieldActive={shieldActive}
+/>
 
 {shieldActive && (
   <Text
@@ -449,16 +531,63 @@ const restartGame = () => {
 />
           <Spaceship shipX={shipX} />
 
-          <Controls
-            moveLeft={moveLeft}
-            moveRight={moveRight}
-          />
+          {!gameOver && !gamePaused && (
+  <Controls
+    moveLeft={moveLeft}
+    moveRight={moveRight}
+  />
+)}
+          {gamePaused && (
+  <PauseMenu
+    onResume={() => {
+  setShowCountdown(true);
+  setCountdown(3);
+}}
+    onRestart={() => {
+      setGamePaused(false);
+      restartGame();
+    }}
+  />
+)}
+{showCountdown && (
+  <View
+    style={{
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+    }}
+  >
+    <Text
+      style={{
+        color: "#FFD54F",
+        fontSize: 90,
+        fontWeight: "bold",
+      }}
+    >
+      {countdown === 0 ? "GO!" : countdown}
+    </Text>
+  </View>
+)}
 
           {gameOver && (
             <GameOver
-              score={score}
-              onRestart={restartGame}
-            />
+    score={score}
+    highScore={highScore}
+    level={
+      score < 5
+        ? "Easy"
+        : score < 10
+        ? "Medium"
+        : score < 20
+        ? "Hard"
+        : "Extreme"
+    }
+    newHighScore={newHighScore}
+  onRestart={restartGame}
+/>
           )}
         </View>
       )}

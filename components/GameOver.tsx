@@ -1,28 +1,68 @@
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-type Props = {
+type GameOverProps = {
   score: number;
+  highScore: number;
+  level: string;
+  newHighScore: boolean;
   onRestart: () => void;
 };
 
-export default function GameOver({ score, onRestart }: Props) {
+export default function GameOver({
+  score,
+  highScore,
+  level,
+  newHighScore,
+  onRestart,
+}: GameOverProps) {
   return (
     <View style={styles.overlay}>
-      <Text style={styles.title}>💥 GAME OVER 💥</Text>
+      <View style={styles.box}>
 
-      <Text style={styles.score}>
-        Final Score: {score}
-      </Text>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={onRestart}
-      >
-        <Text style={styles.buttonText}>
-          Restart Game
+        <Text style={styles.title}>
+          💥 GAME OVER
         </Text>
-      </TouchableOpacity>
+
+        <Text style={styles.text}>
+          ⭐ Final Score : {score}
+        </Text>
+
+        <Text style={styles.text}>
+          🏆 High Score : {highScore}
+        </Text>
+        {newHighScore && (
+  <Text
+    style={{
+      color: "#00E676",
+      fontSize: 22,
+      fontWeight: "bold",
+      marginVertical: 10,
+    }}
+  >
+    🎉 NEW HIGH SCORE!
+  </Text>
+)}
+
+        <Text style={styles.text}>
+          🎯 Difficulty : {level}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onRestart}
+        >
+          <Text style={styles.buttonText}>
+            🔄 Play Again
+          </Text>
+        </TouchableOpacity>
+
+      </View>
     </View>
   );
 }
@@ -32,34 +72,43 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "rgba(0,0,0,0.75)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 100,
+  },
+
+  box: {
+    backgroundColor: "#1C2541",
+    width: 320,
+    borderRadius: 20,
+    padding: 30,
+    alignItems: "center",
   },
 
   title: {
     color: "#FF5252",
-    fontSize: 36,
+    fontSize: 30,
     fontWeight: "bold",
     marginBottom: 25,
   },
 
-  score: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    marginBottom: 35,
+  text: {
+    color: "white",
+    fontSize: 20,
+    marginVertical: 6,
   },
 
   button: {
+    marginTop: 25,
     backgroundColor: "#2979FF",
-    paddingHorizontal: 35,
-    paddingVertical: 15,
+    width: "100%",
+    padding: 15,
     borderRadius: 12,
   },
 
   buttonText: {
-    color: "#FFFFFF",
+    color: "white",
+    textAlign: "center",
     fontSize: 20,
     fontWeight: "bold",
   },
