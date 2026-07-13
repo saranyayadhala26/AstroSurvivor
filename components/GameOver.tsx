@@ -17,6 +17,7 @@ shieldsCollected: number;
 asteroidsDodged: number;
 survivalTime: number;
   onRestart: () => void;
+  onHome:()=>void;
   
 };
 
@@ -31,6 +32,7 @@ export default function GameOver({
     asteroidsDodged,
     survivalTime,
   onRestart,
+  onHome,
 }: GameOverProps) {
   return (
     <View style={styles.overlay}>
@@ -130,6 +132,15 @@ export default function GameOver({
             🔄 Play Again
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+  style={[styles.button, { backgroundColor: "#00C853", marginTop: 12 }]}
+  onPress={onHome}
+>
+  <Text style={styles.buttonText}>
+    🏠 Main Menu
+  </Text>
+</TouchableOpacity>
 
       </View>
     </View>

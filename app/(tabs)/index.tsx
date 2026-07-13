@@ -10,6 +10,13 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import About from "../../components/About";
 import AchievementPopup from "../../components/AchievementPopup";
 import Asteroid from "../../components/Asteroid";
+import {
+  playExplosionSound,
+  playHeartSound,
+  playShieldSound,
+  startBackgroundMusic,
+  stopBackgroundMusic,
+} from "../../components/AudioManager";
 import Controls from "../../components/Controls";
 import Explosion from "../../components/Explosion";
 import { BOTTOM_LIMIT, getAsteroidSpeed, getRandomAsteroidX, isCollision, MAX_X, MIN_X, RESET_Y, } from "../../components/GameEngine";
@@ -24,6 +31,9 @@ import Shield from "../../components/Shield";
 import Spaceship from "../../components/Spaceship";
 import StarBackground from "../../components/StarBackground";
 import StartMenu from "../../components/StartMenu";
+
+
+
 
 export default function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -269,6 +279,7 @@ useEffect(() => {
     if (lives < 3) {
       setLives((prev) => prev + 1);
       setHeartsCollected((prev) => prev + 1);
+      playHeartSound();
     }
 
     setHeartVisible(false);
@@ -347,6 +358,7 @@ useEffect(() => {
     // Activate Shield
     setShieldActive(true);
     setShieldsCollected((prev) => prev + 1);
+    playShieldSound();
 
     
     // Remove Shield
@@ -434,6 +446,7 @@ if (hitAsteroid2) {
 }
 
 setShowExplosion(true);
+playExplosionSound();
 
 setTimeout(() => {
   setShowExplosion(false);
@@ -453,9 +466,11 @@ setTimeout(() => {
     }
 
   } else {
-    setLives(0);
-    setGameOver(true);
-  }
+  stopBackgroundMusic();
+
+  setLives(0);
+  setGameOver(true);
+}
 }
 
 }, [
@@ -486,7 +501,8 @@ useEffect(() => {
 
 
 
-const restartGame = () => {
+const restartGame = async() => {
+  
   setGameOver(false);
   setNewHighScore(false);
   setShipX(0);
@@ -554,10 +570,12 @@ currentPage === "menu" ? (
 
   <StartMenu
     highScore={highScore}
-    onStart={() => {
-      setGameStarted(true);
-      setAsteroidX(getRandomAsteroidX());
-    }}
+    onStart={async () => {
+  await startBackgroundMusic();
+
+  setGameStarted(true);
+  setAsteroidX(getRandomAsteroidX());
+}}
     onHowToPlay={() => {
       setCurrentPage("howToPlay");
     }}
@@ -723,23 +741,52 @@ setSurvivalTime(0);
 
           {gameOver && (
             <GameOver
-    score={score}
-    highScore={highScore}
-    level={
-      score < 5
-        ? "Easy"
-        : score < 10
-        ? "Medium"
-        : score < 20
-        ? "Hard"
-        : "Extreme"
-    }
-    newHighScore={newHighScore}
-    heartsCollected={heartsCollected}
-shieldsCollected={shieldsCollected}
-asteroidsDodged={asteroidsDodged}
-survivalTime={survivalTime}
+  score={score}
+  highScore={highScore}
+  level={
+    score < 5
+      ? "Easy"
+      : score < 10
+      ? "Medium"
+      : score < 20
+      ? "Hard"
+      : "Extreme"
+  }
+  newHighScore={newHighScore}
+  heartsCollected={heartsCollected}
+  shieldsCollected={shieldsCollected}
+  asteroidsDodged={asteroidsDodged}
+  survivalTime={survivalTime}
+
   onRestart={restartGame}
+
+  onHome={() => {
+    stopBackgroundMusic();
+
+    setGameStarted(false);
+    setGameOver(false);
+    setCurrentPage("menu");
+
+    setShipX(0);
+    setScore(0);
+    setLives(3);
+
+    setAsteroidX(getRandomAsteroidX());
+    setAsteroidY(RESET_Y);
+
+    setAsteroid2X(getRandomAsteroidX());
+    setAsteroid2Y(-300);
+
+    setHeartVisible(false);
+    setShieldVisible(false);
+
+    setHeartsCollected(0);
+    setShieldsCollected(0);
+    setAsteroidsDodged(0);
+    setSurvivalTime(0);
+    setCurrentPage("menu");
+    setShowIntro(false);
+  }}
 />
           )}
         </View>
