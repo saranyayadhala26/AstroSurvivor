@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import {
-    Animated,
-    StyleSheet, Text,
-    View
+  Animated,
+  StyleSheet, Text,
+  View
 } from "react-native";
 import StarBackground from "./StarBackground";
 
@@ -91,7 +91,7 @@ export default function IntroScreen({
     },
   ]}
 >
-        {"SPACE ESCAPE RUNNER"}
+        {"🚀 Astro Survivor"}
       </Animated.Text>
       <Text style={styles.tagline}>
   ☄️ Dodge Asteroids
@@ -112,8 +112,7 @@ export default function IntroScreen({
           },
         ]}
       >
-        Created with ❤️ by
-              Saranya
+        Created by Saranya
       </Animated.Text>
 
       <Animated.Text

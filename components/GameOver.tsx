@@ -11,7 +11,13 @@ type GameOverProps = {
   highScore: number;
   level: string;
   newHighScore: boolean;
+
+  heartsCollected: number;
+shieldsCollected: number;
+asteroidsDodged: number;
+survivalTime: number;
   onRestart: () => void;
+  
 };
 
 export default function GameOver({
@@ -19,6 +25,11 @@ export default function GameOver({
   highScore,
   level,
   newHighScore,
+
+   heartsCollected,
+    shieldsCollected,
+    asteroidsDodged,
+    survivalTime,
   onRestart,
 }: GameOverProps) {
   return (
@@ -26,8 +37,66 @@ export default function GameOver({
       <View style={styles.box}>
 
         <Text style={styles.title}>
-          💥 GAME OVER
+    💀 Game Summary
+</Text>
+
+<View style={styles.statsContainer}>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>🏆 Score</Text>
+        <Text style={styles.value}>{score}</Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>💯 High Score</Text>
+        <Text style={styles.value}>{highScore}</Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>❤️ Hearts</Text>
+        <Text style={styles.value}>
+            {heartsCollected}
         </Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>🛡 Shields</Text>
+        <Text style={styles.value}>
+            {shieldsCollected}
+        </Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>
+            ☄ Asteroids Dodged
+        </Text>
+
+        <Text style={styles.value}>
+            {asteroidsDodged}
+        </Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>
+            🎯 Difficulty
+        </Text>
+
+        <Text style={styles.value}>
+            {level}
+        </Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={styles.label}>
+            ⏱ Survival Time
+        </Text>
+
+        <Text style={styles.value}>
+            {survivalTime}s
+        </Text>
+    </View>
+
+</View>
 
         <Text style={styles.text}>
           ⭐ Final Score : {score}
@@ -97,6 +166,51 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginVertical: 6,
   },
+
+  statsContainer: {
+
+    width: "100%",
+
+    backgroundColor: "#1A237E",
+
+    borderRadius: 18,
+
+    padding: 18,
+
+    marginVertical: 25,
+
+},
+
+row: {
+
+    flexDirection: "row",
+
+    justifyContent: "space-between",
+
+    marginVertical: 8,
+
+},
+
+label: {
+
+    color: "#FFFFFF",
+
+    fontSize: 18,
+
+},
+
+value: {
+
+    color: "#FFD54F",
+
+    fontSize: 18,
+
+    fontWeight: "bold",
+
+},
+
+
+
 
   button: {
     marginTop: 25,

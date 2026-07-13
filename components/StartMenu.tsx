@@ -1,9 +1,9 @@
 import React from "react";
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type StartMenuProps = {
@@ -11,19 +11,23 @@ type StartMenuProps = {
   onStart: () => void;
   onHowToPlay: () => void;
   onAbout: () => void;
+  onAchievements: () => void;
+  onSettings: () => void;
 };
 
 export default function StartMenu({
   highScore,
   onStart,
   onHowToPlay,
+  onAchievements,
+  onSettings,
   onAbout,
 }: StartMenuProps) {
   return (
     <View style={styles.container}>
 
       <Text style={styles.title}>
-        🚀 SPACE ESCAPE{"\n"}RUNNER
+        🚀 Astro Survivor
       </Text>
 
       <Text style={styles.score}>
@@ -47,6 +51,23 @@ export default function StartMenu({
           📖 How to Play
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+  style={styles.button}
+  onPress={onAchievements}
+>
+  <Text style={styles.buttonText}>
+    🏆 Achievements
+  </Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={styles.button}
+  onPress={onSettings}
+>
+  <Text style={styles.buttonText}>
+    ⚙ Settings
+  </Text>
+</TouchableOpacity>
 
       <TouchableOpacity
         style={styles.button}
@@ -56,6 +77,17 @@ export default function StartMenu({
           ℹ About
         </Text>
       </TouchableOpacity>
+      <View style={styles.footer}>
+
+  <Text style={styles.footerText}>
+    Version 1.0
+  </Text>
+
+  <Text style={styles.footerText}>
+    Developed by Saranya 
+  </Text>
+
+</View>
 
     </View>
   );
@@ -98,5 +130,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 22,
   },
+
+  footer: {
+  marginTop: 40,
+  alignItems: "center",
+},
+
+footerTitle: {
+  color: "#FFD54F",
+  fontSize: 18,
+  fontWeight: "bold",
+},
+
+footerText: {
+  color: "#BDBDBD",
+  fontSize: 14,
+  marginTop: 4,
+},
 
 });

@@ -1,9 +1,9 @@
 import React from "react";
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type Props = {
@@ -21,7 +21,7 @@ export default function About({
       </Text>
 
       <Text style={styles.appName}>
-        🚀 Space Escape Runner
+        🚀 Astro Survivor
       </Text>
 
       <Text style={styles.text}>

@@ -1,7 +1,14 @@
+import AchievementsScreen from "@/components/AchievementsScreen";
+import {
+  achievements,
+  loadUnlockedAchievements,
+  saveUnlockedAchievements,
+} from "@/utils/achievementManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import About from "../../components/About";
+import AchievementPopup from "../../components/AchievementPopup";
 import Asteroid from "../../components/Asteroid";
 import Controls from "../../components/Controls";
 import Explosion from "../../components/Explosion";
@@ -12,16 +19,18 @@ import HowToPlay from "../../components/HowToPlay";
 import HUD from "../../components/HUD";
 import IntroScreen from "../../components/IntroScreen";
 import PauseMenu from "../../components/PauseMenu";
+import Settings from "../../components/Settings";
 import Shield from "../../components/Shield";
 import Spaceship from "../../components/Spaceship";
 import StarBackground from "../../components/StarBackground";
 import StartMenu from "../../components/StartMenu";
+
 export default function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [currentPage, setCurrentPage] = useState<
-  "menu" | "howToPlay" | "about"
+  "menu" | "howToPlay" | "about" | "achievements" | "settings"
 >("menu");
   const [gamePaused, setGamePaused] = useState(false);
   const [shipX, setShipX] = useState(0);
@@ -50,6 +59,18 @@ const [explosionY, setExplosionY] = useState(0);
 const [countdown, setCountdown] = useState(0);
 const [showCountdown, setShowCountdown] = useState(false);
 const [newHighScore, setNewHighScore] = useState(false);
+const [showAchievement, setShowAchievement] = useState(false);
+const [achievementTitle, setAchievementTitle] = useState("");
+const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+const [heartsCollected, setHeartsCollected] = useState(0);
+
+const [shieldsCollected, setShieldsCollected] = useState(0);
+
+const [asteroidsDodged, setAsteroidsDodged] = useState(0);
+
+const [survivalTime, setSurvivalTime] = useState(0);
+
+
   // Asteroid speed increases with score
   const asteroidSpeed = getAsteroidSpeed(score);
 
@@ -64,6 +85,47 @@ const [newHighScore, setNewHighScore] = useState(false);
      setShipX((prev) => Math.min(prev + 20, MAX_X));
     }
   };
+
+const unlockAchievement = (title: string) => {
+
+  setAchievementTitle(title);
+
+  setShowAchievement(true);
+
+  setTimeout(() => {
+
+    setShowAchievement(false);
+
+  }, 2500);
+
+};
+const checkAchievements = async (score: number) => {
+
+  const achievement = achievements.find(
+    (item) => item.score === score
+  );
+
+  if (!achievement) return;
+
+  if (unlockedAchievements.includes(achievement.id)) {
+    return;
+  }
+
+  unlockAchievement(achievement.title);
+
+  const updated = [
+    ...unlockedAchievements,
+    achievement.id,
+  ];
+
+  setUnlockedAchievements(updated);
+
+  await saveUnlockedAchievements(updated);
+
+};
+
+
+
 
   useEffect(() => {
   loadHighScore();
@@ -80,6 +142,9 @@ const loadHighScore = async () => {
   } catch (error) {
     console.log(error);
   }
+
+  const unlocked = await loadUnlockedAchievements();
+setUnlockedAchievements(unlocked);
 };
 
   // Falling asteroid
@@ -92,6 +157,7 @@ const loadHighScore = async () => {
         if (prev > BOTTOM_LIMIT) {
   setScore((prevScore) => {
   const newScore = prevScore + 1;
+  setAsteroidsDodged((prev) => prev + 1);
 
 if (newScore > highScore) {
 
@@ -105,7 +171,7 @@ if (newScore > highScore) {
   );
 
 }
-
+checkAchievements(newScore);
   return newScore;
 });
 
@@ -129,11 +195,12 @@ if (newScore > highScore) {
       if (prev > BOTTOM_LIMIT) {
 setScore((prevScore) => {
   const newScore = prevScore + 1;
+  setAsteroidsDodged((prev) => prev + 1);
 
   setHighScore((prevHigh) =>
     newScore > prevHigh ? newScore : prevHigh
   );
-
+checkAchievements(newScore);
   return newScore;
 });
 
@@ -201,6 +268,7 @@ useEffect(() => {
 
     if (lives < 3) {
       setLives((prev) => prev + 1);
+      setHeartsCollected((prev) => prev + 1);
     }
 
     setHeartVisible(false);
@@ -278,7 +346,9 @@ useEffect(() => {
 
     // Activate Shield
     setShieldActive(true);
+    setShieldsCollected((prev) => prev + 1);
 
+    
     // Remove Shield
     setShieldVisible(false);
     setShieldY(-500);
@@ -399,6 +469,23 @@ setTimeout(() => {
   gameOver,
 ]);
 
+useEffect(() => {
+
+  if (!gameStarted || gameOver || gamePaused) return;
+
+  const timer = setInterval(() => {
+
+    setSurvivalTime((prev) => prev + 1);
+
+  }, 1000);
+
+  return () => clearInterval(timer);
+
+}, [gameStarted, gameOver, gamePaused]);
+
+
+
+
 const restartGame = () => {
   setGameOver(false);
   setNewHighScore(false);
@@ -418,6 +505,36 @@ const restartGame = () => {
   // Reset lives
   setLives(3);
 };
+
+const resetGameProgress = async () => {
+  try {
+    // Clear all saved data
+  await AsyncStorage.multiRemove([
+  "HIGH_SCORE",
+  "UNLOCKED_ACHIEVEMENTS",
+  // Add any other game-specific keys here
+]);
+
+    // Reset states
+    setHighScore(0);
+    setUnlockedAchievements([]);
+
+    // Return to menu
+    setCurrentPage("menu");
+
+    Alert.alert(
+      "🎉 Reset Complete",
+      "Your progress has been successfully reset!"
+    );
+
+  } catch (error) {
+    Alert.alert(
+      "Error",
+      "Unable to reset progress."
+    );
+  }
+};
+
 return (
 
   showIntro ? (
@@ -433,38 +550,56 @@ return (
     <View style={styles.container}>
       <StarBackground />
       {!gameStarted ? (
+currentPage === "menu" ? (
 
-  currentPage === "menu" ? (
+  <StartMenu
+    highScore={highScore}
+    onStart={() => {
+      setGameStarted(true);
+      setAsteroidX(getRandomAsteroidX());
+    }}
+    onHowToPlay={() => {
+      setCurrentPage("howToPlay");
+    }}
+    onAbout={() => {
+      setCurrentPage("about");
+    }}
+    onAchievements={() => {
+      setCurrentPage("achievements");
+    }}
+    onSettings={() => setCurrentPage("settings")}
+  />
 
-    <StartMenu
-      highScore={highScore}
-      onStart={() => {
-        setGameStarted(true);
-        setAsteroidX(getRandomAsteroidX());
-      }}
-      onHowToPlay={() => {
-        setCurrentPage("howToPlay");
-      }}
-      onAbout={() => {
-        setCurrentPage("about");
-      }}
-    />
+) : currentPage === "howToPlay" ? (
 
-  ) : currentPage === "howToPlay" ? (
+  <HowToPlay
+    onBack={() => setCurrentPage("menu")}
+  />
 
-    <HowToPlay
-      onBack={() => setCurrentPage("menu")}
-    />
+) : currentPage === "about" ? (
 
-  ) : (
+  <About
+    onBack={() => setCurrentPage("menu")}
+  />
 
-    <About
-      onBack={() => setCurrentPage("menu")}
-    />
+  ) : currentPage === "settings" ? (
 
-  )
+<Settings
+    onBack={() => setCurrentPage("menu")}
+    onReset={resetGameProgress}
+/>
 
 ) : (
+
+  <AchievementsScreen
+    unlockedAchievements={unlockedAchievements}
+    onBack={() => setCurrentPage("menu")}
+  />
+
+)
+
+
+  ): (
         <View style={styles.gameContainer}>
           {!gameOver && !gamePaused && (
             <TouchableOpacity
@@ -490,45 +625,21 @@ return (
 )}
           <View style={{ alignItems: "center" }}>
 
-  <Text
-    style={{
-      color: "#FFD54F",
-      fontSize: 20,
-      fontWeight: "bold",
-      marginBottom: 6,
-    }}
-  >
-    🏆 High Score : {highScore}
-  </Text>
-
   <HUD
   score={score}
   highScore={highScore}
   lives={lives}
   level={
-    score < 5
-      ? "🟢 Easy"
-      : score < 10
-      ? "🟡 Medium"
-      : score < 20
-      ? "🟠 Hard"
-      : "🔴 Extreme"
-  }
+  score < 5
+    ? "Easy"
+    : score < 10
+    ? "Medium"
+    : score < 20
+    ? "Hard"
+    : "Extreme"
+}
   shieldActive={shieldActive}
 />
-
-{shieldActive && (
-  <Text
-    style={{
-      color: "#4FC3F7",
-      fontWeight: "bold",
-      fontSize: 18,
-      marginTop: 5,
-    }}
-  >
-    🛡️ Shield Active
-  </Text>
-)}
 
 </View>
           <Asteroid
@@ -556,6 +667,10 @@ return (
   x={explosionX}
   y={explosionY}
 />
+<AchievementPopup
+  visible={showAchievement}
+  title={achievementTitle}
+/>
           <Spaceship shipX={shipX} />
 
           {!gameOver && !gamePaused && (
@@ -573,6 +688,13 @@ return (
     onRestart={() => {
       setGamePaused(false);
       restartGame();
+      setHeartsCollected(0);
+
+setShieldsCollected(0);
+
+setAsteroidsDodged(0);
+
+setSurvivalTime(0);
     }}
   />
 )}
@@ -613,11 +735,16 @@ return (
         : "Extreme"
     }
     newHighScore={newHighScore}
+    heartsCollected={heartsCollected}
+shieldsCollected={shieldsCollected}
+asteroidsDodged={asteroidsDodged}
+survivalTime={survivalTime}
   onRestart={restartGame}
 />
           )}
         </View>
-      )}
+      )
+    }
     </View>
     )
   );
